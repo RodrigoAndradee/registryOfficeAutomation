@@ -1,0 +1,12 @@
+{
+  "inscription": "ctl00$LoginView1$Login1$UserName",
+  "cpf": "ctl00$LoginView1$Login1$txtCNPJ",
+  "password": "ctl00$LoginView1$Login1$Password",
+
+  "input_inscription": "input[name='ctl00$LoginView1$Login1$UserName']",
+  "input_cpf": "input[name='ctl00$LoginView1$Login1$txtCNPJ']",
+  "input_password": "input[name='ctl00$LoginView1$Login1$Password']",
+  "login_button": "input[name='ctl00$LoginView1$Login1$LoginButton']",
+  "registry_office": "a:has-text('Cartório')",
+  "declare": "a:has-text('Declarar')"
+}
