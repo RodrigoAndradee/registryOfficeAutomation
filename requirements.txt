@@ -1,3 +1,8 @@
-Django
+Django>=4.0,<5.0
 celery
+redis
 playwright
+psycopg2-binary
+python-dotenv
+django-widget-tweaks
+django_celery_results

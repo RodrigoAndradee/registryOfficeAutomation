@@ -1,0 +1,58 @@
+{% extends "base.html" %} {% load static %} {% load bot_extras %} {% block 'body' %} 
+
+  <div class="container">
+    <h1>Automações</h1>
+
+    {% if messages %} 
+      {% for message in messages %}
+        <div class="alert {{ message.tags }}" role="alert">{{ message }}</div>
+      {% endfor %} 
+    {% endif %} 
+
+    {% comment %} Filters Toolbar {% endcomment %}
+    <div class="d-flex flex-row bg-dark text-white p-2 fs-6 align-items-center">
+      <form
+        method="post"
+        enctype="multipart/form-data"
+        class="d-flex align-items-center"
+      >
+        {% csrf_token %}
+        <div class="input-group">
+          {{ form.file }}
+          <button type="submit" class="btn btn-primary">Enviar</button>
+        </div>
+      </form>
+    </div>
+
+    <table class="table table-bordered table-striped align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Código</th>
+          <th>Tipo</th>
+          <th>Data da Execução</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for history in histories %}
+          <tr>
+            <td>{{ history.id }}</td>
+            <td>{{ history.code }}</td>
+            <td>{{ history.type }}</td>
+            <td>{{ history.created_at|date:"d/m/Y H:i" }}</td>
+            <td>
+              <span class="badge {{ history.status|status_badge_class }}">
+                {{ history.status|status_badge_label }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center">Nenhuma automação encontrada.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock 'body' %} 
