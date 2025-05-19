@@ -1,9 +1,9 @@
 import os
 import json
+from concurrent.futures import ThreadPoolExecutor
 from celery import shared_task
-from bot.models import AutomationHistory
 from playwright.sync_api import sync_playwright
-from django.db import connection
+from django.utils import timezone
 
 def fill_login_form(page, fields):
     page.fill(fields["input_inscription"], os.getenv("INPUT_INSCRIPTION"))
@@ -20,8 +20,6 @@ def fill_form_content(page, fields, data):
 
 @shared_task(bind=True)
 def execute_form(self, data):
-    history_instance = None
-    
     json_file_path = os.path.join(os.path.dirname(__file__), 'static', 'data', 'form_fields.json')
     with open(json_file_path, 'r', encoding='utf-8') as file:
         form_fields = json.load(file)
@@ -29,7 +27,7 @@ def execute_form(self, data):
     # Trying to login
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(os.getenv("ARAXA_URL"))
 
@@ -38,22 +36,35 @@ def execute_form(self, data):
 
             # Runs the automation on each position of the array
             for item in data:
+                item_id = item.get("item_id")
                 try: 
-                    history_instance = AutomationHistory.objects.create(
-                        code = item["code"],
-                        quantity = item["quantity"],
-                        type = item["type"]
-                    )
                     fill_form_content(page, form_fields, item)
 
-                    # Updating the status on the database
-                    AutomationHistory.objects.filter(id=history_instance.history_id).update(status="SUCCESS")
+                    if item_id:
+                        update_status(item_id, "SUCCESS")
                 except Exception as form_error:
-                    # Updating the status on the database
-                    AutomationHistory.objects.filter(id=history_instance.history_id).update(status="ERROR")
+                    if item_id:
+                        update_status(item_id, "ERROR")
         
-            connection.close()
             browser.close()
             
     except Exception as e:
+        for item in data:
+            item_id = item.get("item_id")
+
+            if item_id:
+                update_status(item_id, "ERROR")
         raise e
+
+def update_status(item_id, status):
+    # Updating the status on the database
+    def task():
+        from bot.models import AutomationHistory
+        AutomationHistory.objects.filter(id=item_id).update(
+            status=status, 
+            finished_at=timezone.now()
+        )
+    
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(task)
+        future.result()

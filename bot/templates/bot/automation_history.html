@@ -24,14 +24,15 @@
       </form>
     </div>
 
-    <table class="table table-bordered table-striped align-middle">
+    <table class="table table-dark table-striped">
       <thead class="table-dark">
         <tr>
           <th>ID</th>
           <th>Código</th>
           <th>Tipo</th>
           <th>Data da Execução</th>
-          {% comment %} <th>Mensagem de Erro</th> {% endcomment %}
+          <th>Data da Término</th>
+          <th>Mensagem de Erro</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -42,7 +43,8 @@
             <td>{{ history.code }}</td>
             <td>{{ history.type }}</td>
             <td>{{ history.created_at|date:"d/m/Y H:i" }}</td>
-            {% comment %} <td>{{ history.error_message }}</td> {% endcomment %}
+            <td>{{ history.finished_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ history.error_message }}</td>
             <td>
               <span class="badge {{ history.status|status_badge_class }}">
                 {{ history.status|status_badge_label }}

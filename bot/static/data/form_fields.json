@@ -10,7 +10,7 @@
   "registry_office": "a:has-text('Cartório')",
   "declare": "a:has-text('Declarar')",
 
-  "code_act": "input[name='ctl00_ContentPlaceHolder1_txtCodAto']",
+  "code_act": "input[name='ctl00$ContentPlaceHolder1$txtCodAto']",
   "type": "input[name='ctl00_ContentPlaceHolder1_ddlTipo']",
   "quantity": "input[name='ctl00_ContentPlaceHolder1_txtQtdAto']",
   "submit_form": "ctl00_ContentPlaceHolder1_btnGravaImprime" 
