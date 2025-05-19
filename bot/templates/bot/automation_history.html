@@ -31,6 +31,7 @@
           <th>Código</th>
           <th>Tipo</th>
           <th>Data da Execução</th>
+          {% comment %} <th>Mensagem de Erro</th> {% endcomment %}
           <th>Status</th>
         </tr>
       </thead>
@@ -41,6 +42,7 @@
             <td>{{ history.code }}</td>
             <td>{{ history.type }}</td>
             <td>{{ history.created_at|date:"d/m/Y H:i" }}</td>
+            {% comment %} <td>{{ history.error_message }}</td> {% endcomment %}
             <td>
               <span class="badge {{ history.status|status_badge_class }}">
                 {{ history.status|status_badge_label }}
@@ -49,7 +51,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7" class="text-center">Nenhuma automação encontrada.</td>
+            <td colspan="6" class="text-center">Nenhuma automação encontrada.</td>
           </tr>
         {% endfor %}
       </tbody>

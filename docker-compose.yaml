@@ -33,7 +33,7 @@ services:
 
   celery:
     build: .
-    command: celery -A core worker --loglevel=info --concurrency=1
+    command: celery -A core worker --loglevel=info --concurrency=${WORKERS_AMOUNT}
     volumes:
       - .:/app
     depends_on:
