@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'bot',
     'widget_tweaks',
     'django_celery_results',
-    # 'bot_extras'
 ]
 
 MIDDLEWARE = [

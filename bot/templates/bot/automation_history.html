@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% load static %} {% load bot_extras %} {% block 'body' %} 
+{% extends "base.html" %} {% load static %} {% load tag_helpers %} {% block body %} 
 
   <div class="container">
     <h1>Automações</h1>
@@ -53,10 +53,10 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="6" class="text-center">Nenhuma automação encontrada.</td>
+            <td colspan="7" class="text-center">Nenhuma automação encontrada.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-{% endblock 'body' %} 
+{% endblock body %} 
