@@ -11,8 +11,19 @@ from .tasks import execute_form
 class ListHistory(View):
 
     def get(self, request):
+        status = request.GET.get("status")
+        date = request.GET.get("date")
+
+        print("Date :", date)
+        
         form = UploadJSONForm()
-        histories = AutomationHistory.objects.all()
+        histories = None
+
+        if status:
+            histories = AutomationHistory.objects.filter(status=status)
+        else :
+            histories = AutomationHistory.objects.all()
+            
         return render(request, 'bot/automation_history.html', {"histories": histories , 'form': form})
     
     def post(self, request):

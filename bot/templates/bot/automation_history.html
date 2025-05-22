@@ -1,6 +1,10 @@
-{% extends "base.html" %} {% load static %} {% load tag_helpers %} {% block body %} 
+{% extends "base.html" %} 
+{% load static %}
+{% load tag_helpers %} 
 
-  <div class="container">
+{% block body %} 
+
+  <div class="p-4">
     <h1>Automações</h1>
 
     {% if messages %} 
@@ -10,16 +14,61 @@
     {% endif %} 
 
     {% comment %} Filters Toolbar {% endcomment %}
-    <div class="d-flex flex-row bg-dark text-white p-2 fs-6 align-items-center">
+    <div class="d-flex flex-row bg-dark p-2 align-items-center gap-2">
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+          Status
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
+          <li>
+            <a class="dropdown-item" href="?status=PROCESSING">
+              <span class="badge {{ "PROCESSING"|status_badge_class }}">
+                {{ "PROCESSING"|status_badge_label }}
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="?status=ERROR">
+              <span class="badge {{ "ERROR"|status_badge_class }}">
+                {{ "ERROR"|status_badge_label }}
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="?status=SUCCESS">
+              <span class="badge {{ "SUCCESS"|status_badge_class }}">
+                {{ "SUCCESS"|status_badge_label }}
+              </span>
+            </a>
+          </li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li>
+            <a class="dropdown-item" href="?">
+              Limpar
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {% comment %} 
+      <form class="d-flex align-items-center gap-2" method="get" action="{% url 'history' %}">
+        <input type="text" id="datepicker" name="date" class="form-control" placeholder="Selecione a data">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+      </form> 
+      {% endcomment %}
+
       <form
         method="post"
         enctype="multipart/form-data"
-        class="d-flex align-items-center"
+        class="d-flex align-items-center ms-auto"
       >
         {% csrf_token %}
         <div class="input-group">
           {{ form.file }}
-          <button type="submit" class="btn btn-primary">Enviar</button>
+          <button type="submit" class="btn btn-primary">Upload</button>
         </div>
       </form>
     </div>
@@ -42,8 +91,8 @@
             <td>{{ history.id }}</td>
             <td>{{ history.code }}</td>
             <td>{{ history.type }}</td>
-            <td>{{ history.created_at|date:"d/m/Y H:i" }}</td>
-            <td>{{ history.finished_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ history.created_at|date:"d/m/Y H:i:i" }}</td>
+            <td>{{ history.finished_at|date:"d/m/Y H:i:i" }}</td>
             <td>{{ history.error_message }}</td>
             <td>
               <span class="badge {{ history.status|status_badge_class }}">
@@ -60,3 +109,13 @@
     </table>
   </div>
 {% endblock body %} 
+
+{% block scripts %} 
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="{% static 'js/scripts.js' %}"></script>
+{% endblock scripts %} 
+
+{% block links %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% endblock links %}

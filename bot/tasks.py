@@ -40,39 +40,40 @@ def execute_form(self, data):
     with open(json_file_path, 'r', encoding='utf-8') as file:
         form_fields = json.load(file)
     
-    # Trying to login
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto(os.getenv("ARAXA_URL"))
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(os.getenv("ARAXA_URL"))
 
+
+        # Trying to login
+        try:
             fill_login_form(page, form_fields)
             navigate_through_menu(page, form_fields)
-
-            # Runs the automation on each position of the array
+        
+        except Exception as e:
             for item in data:
                 item_id = item.get("item_id")
-                try: 
-                    fill_form_content(page, form_fields, item)
 
-                    if item_id:
-                        update_status(item_id, "SUCCESS")
-                except Exception as form_error:
-                    if item_id:
-                        print("Mensagem:", str(form_error))
-                        update_status(item_id, "ERROR", str(form_error))
-        
-            browser.close()
-            
-    except Exception as e:
+                if item_id:
+                    print("Mensagem:", str(e))
+                    update_status(item_id, "ERROR", str(e))
+            raise e
+
+        # Runs the automation on each position of the array
         for item in data:
             item_id = item.get("item_id")
+            try: 
+                fill_form_content(page, form_fields, item)
 
-            if item_id:
-                print("Mensagem:", str(e))
-                update_status(item_id, "ERROR", str(e))
-        raise e
+                if item_id:
+                    update_status(item_id, "SUCCESS")
+            except Exception as form_error:
+                if item_id:
+                    print("Mensagem:", str(form_error))
+                    update_status(item_id, "ERROR", str(form_error))
+    
+        browser.close()
 
 def update_status(item_id, status, error_message = None):
     # Updating the status on the database
