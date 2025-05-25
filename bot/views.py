@@ -57,14 +57,14 @@ class ListHistory(View):
             form.add_error('file', 'Arquivo JSON inválido.')
             return self.render_history(request, form, histories)
 
-        is_valid, error_msg = validate_json_fields(json_content)
-        if not is_valid:
+        error_msg, valid_fields, invalid_fields = validate_json_fields(json_content)
+
+        # Checking if there is no valid data
+        if len(valid_fields) == 0:
             messages.error(request, f"Erro de validação: {error_msg}", extra_tags="alert-danger")
             return redirect("history")
-
-        automation_data = json_content.get("automation_data")
         
-        for item in automation_data:
+        for item in valid_fields:
             instance = AutomationHistory.objects.create(
                 code=item["code"],
                 quantity=item["quantity"],
@@ -72,8 +72,8 @@ class ListHistory(View):
             )
             item["item_id"] = instance.id
 
-        for chunk in split_chunks(automation_data):
+        for chunk in split_chunks(valid_fields):
             execute_form.delay(chunk)
 
-        messages.success(request, "JSON importado com sucesso!", extra_tags="alert-success")
+        messages.success(request, f"JSON importado com sucesso! {len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="alert-success")
         return redirect("history")

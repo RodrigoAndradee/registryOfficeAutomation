@@ -24,7 +24,7 @@ def fill_form_content(page, fields, data):
     safe_fill(page, fields["code_act"], data["code"], "Código do Ato") 
     safe_press(page, 'Enter', "Código do Ato")
     page.wait_for_load_state('networkidle')
-    check_no_alert(page)
+    check_no_alert(page, fields["code_act"])
 
     if data["type"] != "Normal":
         safe_select_option(page, fields["type"], data["type"], 'Campo "Tipo"')
@@ -56,8 +56,7 @@ def execute_form(self, data) -> None:
                 item_id = item.get("item_id")
 
                 if item_id:
-                    print("Mensagem:", str(e))
-                    update_status(item_id, "ERROR", str(e))
+                    update_status(item_id, "ERROR", str(e), True)
             raise e
 
         # Runs the automation on each position of the array
@@ -75,13 +74,14 @@ def execute_form(self, data) -> None:
     
         browser.close()
 
-def update_status(item_id: int, status: str, error_message: str = None) -> None:
+def update_status(item_id: int, status: str, error_message: str = None, can_retry: bool = False) -> None:
     # Updating the status on the database
     def task():
         from bot.models import AutomationHistory
         update_fields = {
             "status": status,
-            "finished_at": timezone.now()
+            "finished_at": timezone.now(),
+            "can_retry": can_retry
         }
 
         if error_message is not None:

@@ -66,6 +66,7 @@
           <th>Data da Término</th>
           <th>Mensagem de Erro</th>
           <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -79,13 +80,14 @@
             <td>{{ history.error_message }}</td>
             <td>
               <span class="badge rounded-pill px-2 {{ history.status|status_badge_class }}">
-                {{ history.status|status_badge_label }}
+                {{ c.status|status_badge_label }}
               </span>
             </td>
+            <td>{{ history.can_retry|yesno:"Sim,Não" }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7" class="text-center">Nenhuma automação encontrada.</td>
+            <td colspan="8" class="text-center">Nenhuma automação encontrada.</td>
           </tr>
         {% endfor %}
       </tbody>

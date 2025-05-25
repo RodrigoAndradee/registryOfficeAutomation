@@ -7,32 +7,51 @@ class AutomationItem(TypedDict):
     quantity: int
     type: str
 
+class AutomationItemsList(TypedDict):
+    List[AutomationItem]
+
 class AutomationData(TypedDict):
-    automation_data: List[AutomationItem]
+    automation_data: AutomationItemsList
 
-def validate_json_fields(data: AutomationData) -> Tuple[bool, str]:
+def validate_json_fields(data: AutomationData) -> Tuple[str, AutomationItemsList, AutomationItemsList]:
+    valid_fields = []
+    invalid_fields = []
+    automation_data = data.get("automation_data")
+
     if "automation_data" not in data:
-        return False, "Campo 'automation_data' está ausente."
+        return "Campo automation_data ausente no JSON!", valid_fields, invalid_fields
 
-    if not isinstance(data["automation_data"], list):
-        return False, "'automation_data' deve ser uma lista."
-
-    for i, item in enumerate(data["automation_data"]):
+    if not isinstance(automation_data, list):
+        return "Campo automation_data não é um array!", valid_fields, invalid_fields
+    
+    for i, item in enumerate(automation_data):
         if not isinstance(item, dict):
-            return False, f"Item {i} em 'automation_data' deve ser um objeto."
+            invalid_fields.append({"message_error": f"Item {i} em 'automation_data' deve ser um objeto."})
+            continue
+            
+        missing_fields = []
+        for field in ["code", "quantity", "type"]:
+            if field not in item:
+                missing_fields.append(field)
 
-        for campo in ["code", "quantity", "type"]:
-            if campo not in item:
-                return False, f"Campo '{campo}' ausente no item {i}."
+        error_message = ", ".join(missing_fields)
+        if len(error_message) > 0:
+            invalid_fields.append({**item, "message_error": f"Campo(s) '{error_message}' ausente(s) no item {i}"})
+            continue
 
         if not isinstance(item["code"], str):
-            return False, f"Campo 'code' no item {i} deve ser uma string."
+            invalid_fields.append({**item, "message_error": f"Campo 'code' no item {i} deve ser uma string."})
+            continue
         if not isinstance(item["quantity"], str):
-            return False, f"Campo 'quantity' no item {i} deve ser um inteiro."
+            invalid_fields.append({**item, "message_error": f"Campo 'quantity' no item {i} deve ser uma string."})
+            continue
         if not isinstance(item["type"], str):
-            return False, f"Campo 'type' no item {i} deve ser uma string."
+            invalid_fields.append({**item, "message_error": f"Campo 'type' no item {i} deve ser uma string."})
+            continue
 
-    return True, ""
+        valid_fields.append(item)
+
+    return "", valid_fields, invalid_fields
 
 # This function breaks the json array in small arrays to match the workers amount    
 def split_chunks(data: List[AutomationItem]) -> List[List[AutomationItem]]:

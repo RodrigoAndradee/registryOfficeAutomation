@@ -24,3 +24,4 @@ class AutomationHistory(models.Model):
     created_at = models.DateTimeField(default=timezone.now())
     finished_at = models.DateTimeField(null=True, blank=True)
     error_message = models.CharField(null=True, blank=True, max_length=510)
+    can_retry = models.BooleanField(default=False)
