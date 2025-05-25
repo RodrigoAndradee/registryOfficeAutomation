@@ -4,62 +4,45 @@
 
 {% block body %} 
 
-  <div class="p-4">
+  <div class="container">
     <h1>Automações</h1>
 
-    {% if messages %} 
-      {% for message in messages %}
-        <div class="alert {{ message.tags }}" role="alert">{{ message }}</div>
-      {% endfor %} 
-    {% endif %} 
+    {% if messages %}
+      <div class="mt-3">
+        {% for message in messages %}
+          <div class="alert {{ message.tags }}" role="alert">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
 
     {% comment %} Filters Toolbar {% endcomment %}
     <div class="d-flex flex-row bg-dark p-2 align-items-center gap-2">
-      <div class="dropdown">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
-          Status
-        </button>
-
-        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
-          <li>
-            <a class="dropdown-item" href="?status=PROCESSING">
-              <span class="badge {{ "PROCESSING"|status_badge_class }}">
-                {{ "PROCESSING"|status_badge_label }}
-              </span>
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="?status=ERROR">
-              <span class="badge {{ "ERROR"|status_badge_class }}">
-                {{ "ERROR"|status_badge_label }}
-              </span>
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="?status=SUCCESS">
-              <span class="badge {{ "SUCCESS"|status_badge_class }}">
-                {{ "SUCCESS"|status_badge_label }}
-              </span>
-            </a>
-          </li>
-          <li>
-            <hr class="dropdown-divider">
-          </li>
-          <li>
-            <a class="dropdown-item" href="?">
-              Limpar
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      {% comment %} 
       <form class="d-flex align-items-center gap-2" method="get" action="{% url 'history' %}">
-        <input type="text" id="datepicker" name="date" class="form-control" placeholder="Selecione a data">
+        
+        <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status }}">
+
+        <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if request.GET.status %}
+              {{ request.GET.status|status_badge_label }}
+            {% else %}
+              Selecione o Status
+            {% endif %}
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="statusDropdown">
+            <li><a class="badge dropdown-item" href="#" data-value="">Todos</a></li>
+            <li><a class="badge dropdown-item" href="#" data-value="PROCESSING">{{ "PROCESSING"|status_badge_label }}</a></li>
+            <li><a class="badge dropdown-item" href="#" data-value="ERROR">{{ "ERROR"|status_badge_label }}</a></li>
+            <li><a class="badge dropdown-item" href="#" data-value="SUCCESS">{{ "SUCCESS"|status_badge_label }}</a></li>
+          </ul>
+        </div>
+      
+        <input type="text" id="datepicker" name="date" class="form-control" placeholder="Selecione a data" value="{{ request.GET.date }}">
+
         <button type="submit" class="btn btn-primary">Filtrar</button>
       </form> 
-      {% endcomment %}
-
+      
       <form
         method="post"
         enctype="multipart/form-data"
@@ -91,11 +74,11 @@
             <td>{{ history.id }}</td>
             <td>{{ history.code }}</td>
             <td>{{ history.type }}</td>
-            <td>{{ history.created_at|date:"d/m/Y H:i:i" }}</td>
-            <td>{{ history.finished_at|date:"d/m/Y H:i:i" }}</td>
+            <td>{{ history.created_at|date:"d/m/Y H:i:s" }}</td>
+            <td>{{ history.finished_at|date:"d/m/Y H:i:s" }}</td>
             <td>{{ history.error_message }}</td>
             <td>
-              <span class="badge {{ history.status|status_badge_class }}">
+              <span class="badge rounded-pill px-2 {{ history.status|status_badge_class }}">
                 {{ history.status|status_badge_label }}
               </span>
             </td>

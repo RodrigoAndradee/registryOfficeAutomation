@@ -1,6 +1,16 @@
 import os
 
-def validate_json_fields(data):
+from typing import TypedDict, List, Tuple
+
+class AutomationItem(TypedDict):
+    code: int
+    quantity: int
+    type: str
+
+class AutomationData(TypedDict):
+    automation_data: List[AutomationItem]
+
+def validate_json_fields(data: AutomationData) -> Tuple[bool, str]:
     if "automation_data" not in data:
         return False, "Campo 'automation_data' está ausente."
 
@@ -25,7 +35,7 @@ def validate_json_fields(data):
     return True, ""
 
 # This function breaks the json array in small arrays to match the workers amount    
-def split_chunks(data):
+def split_chunks(data: List[AutomationItem]) -> List[List[AutomationItem]]:
     workers_amount = int(os.getenv("WORKERS_AMOUNT", 1))
 
     if workers_amount <= 1:

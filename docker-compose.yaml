@@ -3,7 +3,7 @@ version: "3.8"
 services:
   db:
     image: postgres:15
-    container_name: automation_araxa
+    container_name: postgres
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
@@ -17,10 +17,12 @@ services:
 
   redis:
     image: redis:7
+    container_name: redis
     ports:
       - "6380:6379"
 
   web:
+    container_name: django_server
     build: .
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
@@ -34,13 +36,14 @@ services:
       - .env
 
   celery:
+    container_name: celery
     build: .
     command: celery -A core worker --loglevel=info --concurrency=${WORKERS_AMOUNT}
     volumes:
       - .:/app
     depends_on:
-      - redis
       - db
+      - redis
     env_file:
       - .env
     mem_limit: 1024m
