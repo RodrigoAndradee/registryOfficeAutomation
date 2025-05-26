@@ -43,7 +43,7 @@ class ListHistory(View):
             else:
                 messages.warning(request, "Formato de data inválido", extra_tags="alert-warning")
 
-        return self.render_history(request, form, histories)
+        return self.render_history(request, form, histories.order_by('-id'))
     
     def post(self, request: HttpRequest) -> HttpResponse:
         form: UploadJSONForm = UploadJSONForm(request.POST, request.FILES)
@@ -91,14 +91,25 @@ class RetryHistory(View):
             history = get_object_or_404(AutomationHistory, pk=pk)
 
             if history.status == 'ERROR':
-                execute_form.delay([{
+                history_copy = {
                     "code": history.code,
                     "quantity": history.quantity,
                     "type": history.type,
                     "item_id": history.id
-                }])
-                history.status = 'PROCESSING'
+                }
+
+                instance = AutomationHistory.objects.create(
+                    code=history_copy["code"],
+                    quantity=history_copy["quantity"],
+                    type=history_copy["type"]
+                )
+                history_copy["item_id"] = instance.id
+
+                # Removing the retry button from the original row
+                history.can_retry = False
                 history.save()
-                messages.success(request, f"Tarefa #{history.id} reenviada com sucesso.", extra_tags="alert-success")
+
+                execute_form.delay([history_copy])
+                messages.success(request, "Tarefa reenviada com sucesso.", extra_tags="alert-success")
         
         return redirect('history')

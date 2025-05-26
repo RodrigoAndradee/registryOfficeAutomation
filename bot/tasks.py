@@ -24,7 +24,7 @@ def fill_form_content(page, fields, data):
     safe_fill(page, fields["code_act"], data["code"], "Código do Ato") 
     safe_press(page, 'Enter', "Código do Ato")
     page.wait_for_load_state('networkidle')
-    check_no_alert(page, fields["code_act"])
+    check_no_alert(page, data["code"])
 
     if data["type"] != "Normal":
         safe_select_option(page, fields["type"], data["type"], 'Campo "Tipo"')
