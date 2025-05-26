@@ -5,13 +5,15 @@ from datetime import datetime
 from django.contrib import messages
 from django.views import View
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_POST
 
-from bot.helpers.json_helpers.json_helper import split_chunks, validate_json_fields
 from .models import AutomationHistory
 from .forms import UploadJSONForm
 from .tasks import execute_form
+
+from bot.helpers.json_helpers.json_helper import split_chunks, validate_json_fields
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,9 @@ class ListHistory(View):
         if date_str:
             parsed_date = parse_date(date_str)
             if parsed_date:
-                histories = histories.filter(created_at=parsed_date)
+                start_datetime = datetime.combine(parsed_date, datetime.min.time())
+                end_datetime = datetime.combine(parsed_date, datetime.max.time())
+                histories = histories.filter(created_at__range=(start_datetime, end_datetime))
             else:
                 messages.warning(request, "Formato de data inválido", extra_tags="alert-warning")
 
@@ -77,3 +81,24 @@ class ListHistory(View):
 
         messages.success(request, f"JSON importado com sucesso! {len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="alert-success")
         return redirect("history")
+    
+
+class RetryHistory(View):
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        pk = kwargs.get("pk")
+    
+        if pk is not None:
+            history = get_object_or_404(AutomationHistory, pk=pk)
+
+            if history.status == 'ERROR':
+                execute_form.delay([{
+                    "code": history.code,
+                    "quantity": history.quantity,
+                    "type": history.type,
+                    "item_id": history.id
+                }])
+                history.status = 'PROCESSING'
+                history.save()
+                messages.success(request, f"Tarefa #{history.id} reenviada com sucesso.", extra_tags="alert-success")
+        
+        return redirect('history')

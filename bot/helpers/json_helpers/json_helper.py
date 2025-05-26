@@ -3,8 +3,8 @@ import os
 from typing import TypedDict, List, Tuple
 
 class AutomationItem(TypedDict):
-    code: int
-    quantity: int
+    code: str
+    quantity: str
     type: str
 
 class AutomationItemsList(TypedDict):

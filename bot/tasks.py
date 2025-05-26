@@ -46,7 +46,7 @@ def execute_form(self, data) -> None:
 
         try:
             page.on("dialog", handle_dialog)
-            safe_navigate(page, os.getenv("ARAXA_URL"))
+            safe_navigate(page, os.getenv("AUTOMATION_TARGET_URL"))
 
             fill_login_form(page, form_fields)
             navigate_through_menu(page, form_fields)

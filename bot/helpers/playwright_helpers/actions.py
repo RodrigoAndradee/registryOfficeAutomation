@@ -29,9 +29,9 @@ def safe_press(page: Page, key: str, field_name: str) -> None:
         raise Exception(f"Erro ao pressionar '{key}' em '{field_name}'")
 
 # Function to safe check if the site is open
-def safe_navigate(page: Page, araxa_url: str) -> None:
+def safe_navigate(page: Page, site_url: str) -> None:
     try:
-        page.goto(araxa_url)
+        page.goto(site_url)
     except Exception as e:
         raise Exception("Erro! O Site pode estar indisponível!")
 
