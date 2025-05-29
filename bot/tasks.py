@@ -21,6 +21,8 @@ def navigate_through_menu(page: Page, fields) -> None:
     safe_click(page, fields["declare"], "Declarar (Menu de navegação)")
 
 def fill_form_content(page, fields, data):
+    # Selecting Mayo just for testing.. Need to check if its really needed
+    safe_select_option(page, fields["mounth"], "Maio", "Campo Mês")
     safe_fill(page, fields["code_act"], data["code"], "Código do Ato") 
     safe_press(page, 'Enter', "Código do Ato")
     page.wait_for_load_state('networkidle')
@@ -31,8 +33,7 @@ def fill_form_content(page, fields, data):
 
     safe_fill(page, fields["quantity"], str(data["quantity"]), "Quantidade")
 
-    # TODO: Click on confirm button
-    # safe_click(page, fields["confirm_button"], "Botão Confirmar")
+    safe_click(page, fields["submit_form"], "Botão Confirmar")
 
 @shared_task(bind=True)
 def execute_form(self, data) -> None:

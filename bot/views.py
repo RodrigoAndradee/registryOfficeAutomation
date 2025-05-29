@@ -18,11 +18,24 @@ from bot.helpers.json_helpers.json_helper import split_chunks, validate_json_fie
 logger = logging.getLogger(__name__)
 
 class ListHistory(View):
-
+    
     def render_history(self, request: HttpRequest, form: UploadJSONForm, histories) -> HttpResponse:
-        return render(request, 'bot/automation_history.html', {
-            'form': form, 
-            'histories': histories
+        columns = [
+            {"title": "ID", "path": "id"},
+            {"title": "Código", "path": "code"},
+            {"title": "Tipo", "path": "type"},
+            {"title": "Quantidade", "path": "quantity"},
+            {"title": "Data da Execução", "path": "created_at"},
+            {"title": "Data da Término", "path": "finished_at"},
+            {"title": "Mensagem de Erro", "path": "error_message"},
+            {"title": "Status", "path": "status"},
+            {"title": "Ações", "path": "action"}
+        ]
+
+        return render(request, "bot/automation_history.html", {
+            "form": form, 
+            "histories": histories,
+            "columns": columns,
         })
 
     def get(self, request: HttpRequest) -> HttpResponse:
@@ -43,7 +56,7 @@ class ListHistory(View):
             else:
                 messages.warning(request, "Formato de data inválido", extra_tags="alert-warning")
 
-        return self.render_history(request, form, histories.order_by('-id'))
+        return self.render_history(request, form, histories.order_by("-id"))
     
     def post(self, request: HttpRequest) -> HttpResponse:
         form: UploadJSONForm = UploadJSONForm(request.POST, request.FILES)
@@ -52,13 +65,13 @@ class ListHistory(View):
         if not form.is_valid():
             return self.render_history(request, form, histories)
 
-        uploaded_file = form.cleaned_data['file']
+        uploaded_file = form.cleaned_data["file"]
 
         try:
             json_content = json.load(uploaded_file)
         except json.JSONDecodeError as e:
             logger.error("Erro ao carregar JSON: %s", e)
-            form.add_error('file', 'Arquivo JSON inválido.')
+            form.add_error("file", "Arquivo JSON inválido.")
             return self.render_history(request, form, histories)
 
         error_msg, valid_fields, invalid_fields = validate_json_fields(json_content)
@@ -90,7 +103,7 @@ class RetryHistory(View):
         if pk is not None:
             history = get_object_or_404(AutomationHistory, pk=pk)
 
-            if history.status == 'ERROR':
+            if history.status == "ERROR":
                 history_copy = {
                     "code": history.code,
                     "quantity": history.quantity,
@@ -112,4 +125,4 @@ class RetryHistory(View):
                 execute_form.delay([history_copy])
                 messages.success(request, "Tarefa reenviada com sucesso.", extra_tags="alert-success")
         
-        return redirect('history')
+        return redirect("history")

@@ -10,9 +10,10 @@
   "registry_office": "a:has-text('Cartório')",
   "declare": "a:has-text('Declarar')",
 
+  "mounth": "#ctl00_ContentPlaceHolder1_ddlMesPeriodo",
   "code_act": "input[name='ctl00$ContentPlaceHolder1$txtCodAto']",
   "type": "#ctl00_ContentPlaceHolder1_ddlTipo",
   "type_complement": "select#ctl00_ContentPlaceHolder1_ddlDesAto",
   "quantity": "input[name='ctl00$ContentPlaceHolder1$txtQtdAto']",
-  "submit_form": "ctl00$ContentPlaceHolder1$btnGravaImprime"
+  "submit_form": "input[name='ctl00$ContentPlaceHolder1$btnGravaImprime']"
 }
