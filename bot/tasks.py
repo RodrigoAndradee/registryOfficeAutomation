@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Dict
 
 from django.utils import timezone
 
@@ -7,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from celery import shared_task
 from playwright.sync_api import sync_playwright, Page
 
-from bot.helpers.playwright_helpers.actions import safe_click, safe_fill, safe_press, safe_select_option, safe_navigate, handle_dialog, check_no_alert
+from bot.helpers.playwright_helpers.actions import safe_click, safe_fill, safe_press, safe_select_option, safe_navigate
 
 def fill_login_form(page: Page, fields) -> None:
     safe_fill(page, fields["input_inscription"], os.getenv("INPUT_INSCRIPTION"), "Inscrição")
@@ -26,7 +27,7 @@ def fill_form_content(page, fields, data):
     safe_fill(page, fields["code_act"], data["code"], "Código do Ato") 
     safe_press(page, 'Enter', "Código do Ato")
     page.wait_for_load_state('networkidle')
-    check_no_alert(page, data["code"])
+    # check_no_alert(page, data["code"])
 
     if data["type"] != "Normal":
         safe_select_option(page, fields["type"], data["type"], 'Campo "Tipo"')
@@ -35,27 +36,41 @@ def fill_form_content(page, fields, data):
 
     safe_click(page, fields["submit_form"], "Botão Confirmar")
 
+def listen_for_all_dialogs(page: Page, error_store: Dict[str, str]):
+    def handle_dialog(dialog):
+        error_store["message"] = dialog.message
+        dialog.accept()
+
+    page.on("dialog", handle_dialog)
+
 @shared_task(bind=True)
 def execute_form(self, data) -> None:
     json_file_path = os.path.join(os.path.dirname(__file__), 'static', 'data', 'form_fields.json')
     with open(json_file_path, 'r', encoding='utf-8') as file:
         form_fields = json.load(file)
-    
+          
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-
+        
+        error_data = {}
+        listen_for_all_dialogs(page, error_data)
+        
+        print("TESTE")
+        
         try:
-            page.on("dialog", handle_dialog)
+            # page.on("dialog", handle_dialog)
             safe_navigate(page, os.getenv("AUTOMATION_TARGET_URL"))
 
             fill_login_form(page, form_fields)
             navigate_through_menu(page, form_fields)
-        
+                        
+            if "message" in error_data:
+                raise Exception(error_data["message"])
+                            
         except Exception as e:
             for item in data:
                 item_id = item.get("item_id")
-
                 if item_id:
                     update_status(item_id, "ERROR", str(e), True)
             raise e

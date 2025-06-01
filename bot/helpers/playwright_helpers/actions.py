@@ -1,4 +1,5 @@
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
+from typing import Dict
 
 # Function to safe fill some input
 def safe_fill(page: Page, selector: str, value: str, field_name: str) -> None:
@@ -35,8 +36,15 @@ def safe_navigate(page: Page, site_url: str) -> None:
     except Exception as e:
         raise Exception("Erro! O Site pode estar indisponível!")
 
+def listen_for_all_dialogs(page: Page, error_store: Dict[str, str]):
+    def handle_dialog(dialog):
+        error_store["message"] = dialog.message
+        dialog.accept()
+
+    page.on("dialog", handle_dialog)
+
 # Function to close the dialog
-def handle_dialog(dialog):
+def handle_dialog(dialog) -> str:
     dialog.accept()
 
 # Function to check if there is no alert 
