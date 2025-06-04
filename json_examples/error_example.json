@@ -1,0 +1,14 @@
+{
+  "automation_data": [
+    {
+      "code": "4135-0",
+      "quantity": "2",
+      "type": "SFH/MCMV"
+    },
+    {
+      "code": "9999-0",
+      "quantity": "2",
+      "type": "Normal"
+    }
+  ]
+}

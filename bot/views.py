@@ -7,7 +7,7 @@ from django.views import View
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.dateparse import parse_date
-from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
 
 from .models import AutomationHistory
 from .forms import UploadJSONForm
@@ -41,9 +41,11 @@ class ListHistory(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         status = request.GET.get("status")
         date_str = request.GET.get("date")
+        page_number = request.GET.get("page")
+
         form: UploadJSONForm = UploadJSONForm()
 
-        histories = AutomationHistory.objects.all()
+        histories = AutomationHistory.objects.all().order_by("-id")
 
         if status:
             histories = histories.filter(status=status)
@@ -54,9 +56,12 @@ class ListHistory(View):
                 end_datetime = datetime.combine(parsed_date, datetime.max.time())
                 histories = histories.filter(created_at__range=(start_datetime, end_datetime))
             else:
-                messages.warning(request, "Formato de data inválido", extra_tags="alert-warning")
+                messages.warning(request, "Formato de data inválido", extra_tags="danger")
 
-        return self.render_history(request, form, histories.order_by("-id"))
+        paginator = Paginator(histories, 30)
+        page_obj = paginator.get_page(page_number)
+
+        return self.render_history(request, form, page_obj)
     
     def post(self, request: HttpRequest) -> HttpResponse:
         form: UploadJSONForm = UploadJSONForm(request.POST, request.FILES)
@@ -78,7 +83,7 @@ class ListHistory(View):
 
         # Checking if there is no valid data
         if len(valid_fields) == 0:
-            messages.error(request, f"Erro de validação: {error_msg}", extra_tags="alert-danger")
+            messages.error(request, error_msg if error_msg else "Nenhum dado importado corretamente! Verifique seu JSON!", extra_tags="danger")
             return redirect("history")
         
         for item in valid_fields:
@@ -92,7 +97,7 @@ class ListHistory(View):
         for chunk in split_chunks(valid_fields):
             execute_form.delay(chunk)
 
-        messages.success(request, f"JSON importado com sucesso! {len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="alert-success")
+        messages.success(request, f"{len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="success")
         return redirect("history")
     
 
@@ -123,6 +128,6 @@ class RetryHistory(View):
                 history.save()
 
                 execute_form.delay([history_copy])
-                messages.success(request, "Tarefa reenviada com sucesso.", extra_tags="alert-success")
+                messages.success(request, "Tarefa reenviada com sucesso.", extra_tags="success")
         
         return redirect("history")

@@ -1,4 +1,5 @@
 import os
+import re
 
 from typing import TypedDict, List, Tuple
 
@@ -12,6 +13,24 @@ class AutomationItemsList(TypedDict):
 
 class AutomationData(TypedDict):
     automation_data: AutomationItemsList
+
+# This function handles the code and return the correct and validated value
+# Eg. 4135 returns 4135-0
+def calculate_check_digit_mod10(code: str) -> str:
+    weights = [2, 1]
+    total = 0
+
+    for i, digit in enumerate(reversed(code)):
+        n = int(digit)
+        weight = weights[i % 2]
+        product = n * weight
+        if product >= 10:
+            product -= 9
+        total += product
+
+    remainder = total % 10
+    check_digit = (10 - remainder) if remainder != 0 else 0
+    return f"{code}-{check_digit}"
 
 def validate_json_fields(data: AutomationData) -> Tuple[str, AutomationItemsList, AutomationItemsList]:
     valid_fields = []
@@ -42,6 +61,9 @@ def validate_json_fields(data: AutomationData) -> Tuple[str, AutomationItemsList
         if not isinstance(item["code"], str):
             invalid_fields.append({**item, "message_error": f"Campo 'code' no item {i} deve ser uma string."})
             continue
+        if not re.match(r'^\d{4}', item["code"]):
+            invalid_fields.append({**item, "message_error": f"Campo 'code' no item {i} não segue o padrão."})
+            continue
         if not isinstance(item["quantity"], str):
             invalid_fields.append({**item, "message_error": f"Campo 'quantity' no item {i} deve ser uma string."})
             continue
@@ -49,7 +71,7 @@ def validate_json_fields(data: AutomationData) -> Tuple[str, AutomationItemsList
             invalid_fields.append({**item, "message_error": f"Campo 'type' no item {i} deve ser uma string."})
             continue
 
-        valid_fields.append(item)
+        valid_fields.append({**item, "code": calculate_check_digit_mod10(item["code"]) })
 
     return "", valid_fields, invalid_fields
 

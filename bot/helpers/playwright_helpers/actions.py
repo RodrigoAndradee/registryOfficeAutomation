@@ -1,3 +1,5 @@
+from typing import Dict
+
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
 # Function to safe fill some input
@@ -15,11 +17,11 @@ def safe_click(page: Page, selector: str, field_name: str) -> None:
         raise Exception(f"Erro ao clicar em '{field_name}'")
     
 # Function to safe select some option
-def safe_select_option(page: Page, selector: str, label: str, field_name: str) -> None:
+def safe_select_option(page: Page, selector: str, value: str, field_name: str, timeout: float = 2000) -> None:
     try:
-        page.select_option(selector, label=label)
+        page.select_option(selector, value=value, timeout=timeout)
     except Exception as e:
-        raise Exception(f"Erro ao selecionar '{field_name}' com o valor '{label}'")
+        raise Exception(f"Erro ao selecionar '{field_name}' com o valor '{value}'")
 
 # Function to safe press some key
 def safe_press(page: Page, key: str, field_name: str) -> None:
@@ -34,15 +36,18 @@ def safe_navigate(page: Page, site_url: str) -> None:
         page.goto(site_url)
     except Exception as e:
         raise Exception("Erro! O Site pode estar indisponível!")
-
-# Function to close the dialog
-def handle_dialog(dialog):
-    dialog.accept()
-
-# Function to check if there is no alert 
-def check_no_alert(page: Page, code_act: int) -> None:
+    
+def safe_hover(page: Page, field: str) -> None:
     try:
-        page.wait_for_event("dialog", timeout=5000)
-        raise Exception(f"Código do Ato ({code_act}) inválido!")
-    except PlaywrightTimeoutError:
-        return None
+        page.hover(field)
+    except Exception as e:
+        raise Exception("Erro ao navegar pelo menu!")
+
+# Function to listen for dialogs and set the message on a variable
+def listen_for_all_dialogs(page: Page, error_store: Dict[str, str]):
+    def handle_dialog(dialog):
+        error_store["active"] = True
+        error_store["message"] = dialog.message
+        dialog.accept()
+
+    page.on("dialog", handle_dialog)

@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from celery import shared_task
 from playwright.sync_api import sync_playwright, Page
 
-from bot.helpers.playwright_helpers.actions import safe_click, safe_fill, safe_press, safe_select_option, safe_navigate, handle_dialog, check_no_alert
+from bot.helpers.playwright_helpers.actions import safe_click, safe_fill, safe_press, safe_select_option, safe_navigate, safe_hover, listen_for_all_dialogs
 
 def fill_login_form(page: Page, fields) -> None:
     safe_fill(page, fields["input_inscription"], os.getenv("INPUT_INSCRIPTION"), "Inscrição")
@@ -17,22 +17,20 @@ def fill_login_form(page: Page, fields) -> None:
     safe_click(page, fields["login_button"], "Entrar")
 
 def navigate_through_menu(page: Page, fields) -> None:
-    page.hover(fields["registry_office"])
+    safe_hover(fields["registry_office"])
     safe_click(page, fields["declare"], "Declarar (Menu de navegação)")
 
 def fill_form_content(page, fields, data):
-    # Selecting Mayo just for testing.. Need to check if its really needed
-    safe_select_option(page, fields["mounth"], "Maio", "Campo Mês")
     safe_fill(page, fields["code_act"], data["code"], "Código do Ato") 
     safe_press(page, 'Enter', "Código do Ato")
     page.wait_for_load_state('networkidle')
-    check_no_alert(page, data["code"])
 
-    if data["type"] != "Normal":
+    # The default value on the form is Normal, we just need to change in case it's different from Normal
+    # TODO: needs to check if 100 is the Normal value
+    if data["type"] != "100":
         safe_select_option(page, fields["type"], data["type"], 'Campo "Tipo"')
 
     safe_fill(page, fields["quantity"], str(data["quantity"]), "Quantidade")
-
     safe_click(page, fields["submit_form"], "Botão Confirmar")
 
 @shared_task(bind=True)
@@ -45,8 +43,11 @@ def execute_form(self, data) -> None:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
 
+        dialog_error_data = {}
+
+        listen_for_all_dialogs(page, dialog_error_data)
+
         try:
-            page.on("dialog", handle_dialog)
             safe_navigate(page, os.getenv("AUTOMATION_TARGET_URL"))
 
             fill_login_form(page, form_fields)
@@ -63,14 +64,21 @@ def execute_form(self, data) -> None:
         # Runs the automation on each position of the array
         for item in data:
             item_id = item.get("item_id")
+            dialog_error_data.clear()
+
             try: 
                 fill_form_content(page, form_fields, item)
+                # Waiting 0,5 seconds to check if there is some dialog on the screen
+                page.wait_for_timeout(500)
+
+                if dialog_error_data.get("active"):
+                    error_message = dialog_error_data.get("message", "Erro desconhecido")
+                    raise Exception(error_message)  
 
                 if item_id:
                     update_status(item_id, "SUCCESS")
             except Exception as form_error:
                 if item_id:
-                    print("Mensagem:", str(form_error))
                     update_status(item_id, "ERROR", str(form_error))
     
         browser.close()
