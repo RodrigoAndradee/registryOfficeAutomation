@@ -17,7 +17,7 @@ def fill_login_form(page: Page, fields) -> None:
     safe_click(page, fields["login_button"], "Entrar")
 
 def navigate_through_menu(page: Page, fields) -> None:
-    safe_hover(fields["registry_office"])
+    safe_hover(page, fields["registry_office"])
     safe_click(page, fields["declare"], "Declarar (Menu de navegação)")
 
 def fill_form_content(page, fields, data):
