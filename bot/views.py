@@ -7,9 +7,10 @@ from django.views import View
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.dateparse import parse_date
-from django.core.paginator import Paginator
+from django_tables2 import RequestConfig
 
 from .models import AutomationHistory
+from .tables import AutomationHistoryTable
 from .forms import UploadJSONForm
 from .tasks import execute_form
 
@@ -20,28 +21,18 @@ logger = logging.getLogger(__name__)
 class ListHistory(View):
     
     def render_history(self, request: HttpRequest, form: UploadJSONForm, histories) -> HttpResponse:
-        columns = [
-            {"title": "ID", "path": "id"},
-            {"title": "Código", "path": "code"},
-            {"title": "Tipo", "path": "type"},
-            {"title": "Quantidade", "path": "quantity"},
-            {"title": "Data da Execução", "path": "created_at"},
-            {"title": "Data da Término", "path": "finished_at"},
-            {"title": "Mensagem de Erro", "path": "error_message"},
-            {"title": "Status", "path": "status"},
-            {"title": "Ações", "path": "action"}
-        ]
+        table = AutomationHistoryTable(histories)
+        RequestConfig(request, paginate={"per_page": 30}).configure(table)
 
         return render(request, "bot/automation_history.html", {
             "form": form, 
             "histories": histories,
-            "columns": columns,
+            "table": table
         })
 
     def get(self, request: HttpRequest) -> HttpResponse:
         status = request.GET.get("status")
         date_str = request.GET.get("date")
-        page_number = request.GET.get("page")
 
         form: UploadJSONForm = UploadJSONForm()
 
@@ -58,10 +49,7 @@ class ListHistory(View):
             else:
                 messages.warning(request, "Formato de data inválido", extra_tags="danger")
 
-        paginator = Paginator(histories, 30)
-        page_obj = paginator.get_page(page_number)
-
-        return self.render_history(request, form, page_obj)
+        return self.render_history(request, form, histories)
     
     def post(self, request: HttpRequest) -> HttpResponse:
         form: UploadJSONForm = UploadJSONForm(request.POST, request.FILES)

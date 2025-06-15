@@ -41,9 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'bot',
     'widget_tweaks',
     'django_celery_results',
+    'django_tables2',
+    'bot',
 ]
 
 MIDDLEWARE = [

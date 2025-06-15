@@ -1,6 +1,5 @@
 from django.db import models
 from django.core.validators import RegexValidator
-from django.utils import timezone
 
 class AutomationHistory(models.Model):
 
@@ -21,7 +20,7 @@ class AutomationHistory(models.Model):
     quantity = models.IntegerField()
     type = models.CharField(max_length=255)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PROCESSING')
-    created_at = models.DateTimeField(default=timezone.now())
+    created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
     error_message = models.CharField(null=True, blank=True, max_length=510)
     can_retry = models.BooleanField(default=False)

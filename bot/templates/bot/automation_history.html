@@ -1,6 +1,7 @@
 {% extends "base.html" %} 
 {% load static %}
 {% load table_helpers %}
+{% load render_table from django_tables2 %}
 
 {% block body %} 
 
@@ -45,8 +46,7 @@
       </form>
     </div>
 
-    {% include "components/table.html" with columns=columns values=histories %}
-
+    {% render_table table %}
   </div>
 {% endblock body %} 
 
@@ -58,4 +58,5 @@
 {% block links %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 {% endblock links %}

@@ -1,0 +1,7 @@
+<form method="post" action="{% url 'retry_history' pk=record.id %}">
+  {% csrf_token %}
+
+    {% if record.can_retry and record.status == "ERROR" %}
+        <button type="submit" class="btn btn-sm btn-warning">Tentar Novamente</button>
+    {% endif%}
+</form>

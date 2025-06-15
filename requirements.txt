@@ -6,3 +6,4 @@ psycopg2-binary
 python-dotenv
 django-widget-tweaks
 django_celery_results
+django_tables2
