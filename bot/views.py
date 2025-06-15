@@ -60,10 +60,14 @@ class ListHistory(View):
 
         uploaded_file = form.cleaned_data["file"]
 
+        if uploaded_file.content_type != 'application/json':
+            form.add_error('file', 'O tipo de arquivo não é JSON.')
+            messages.warning(request, "O tipo de arquivo não é JSON.'", extra_tags="danger")
+            return self.render_history(request, form, histories)
+
         try:
             json_content = json.load(uploaded_file)
         except json.JSONDecodeError as e:
-            logger.error("Erro ao carregar JSON: %s", e)
             form.add_error("file", "Arquivo JSON inválido.")
             return self.render_history(request, form, histories)
 

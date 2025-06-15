@@ -61,7 +61,7 @@ def validate_json_fields(data: AutomationData) -> Tuple[str, AutomationItemsList
         if not isinstance(item["code"], str):
             invalid_fields.append({**item, "message_error": f"Campo 'code' no item {i} deve ser uma string."})
             continue
-        if not re.match(r'^\d{4}', item["code"]):
+        if not re.fullmatch(r'\d{4}', item["code"]):
             invalid_fields.append({**item, "message_error": f"Campo 'code' no item {i} não segue o padrão."})
             continue
         if not isinstance(item["quantity"], str):
