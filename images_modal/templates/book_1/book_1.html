@@ -1,0 +1,26 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block body %} 
+<div class="p-4">
+    <div class="d-flex flex-wrap gap-3">
+        {% for image in images %}
+            <img src="{{ image.url }}"
+                class="img-thumbnail"
+                style="width: 120px; cursor: pointer;"
+                onclick="openImageModal({{ forloop.counter0 }})"
+                alt="Miniature {{ forloop.counter }}">
+        {% endfor %}
+    </div>
+
+    {% include "components/image_modal.html" with title="Visualizaçao Livro 1" images=images leftButtonContent="<button class='btn btn-primary' type='submit' name='test'>Botão Esquerdo</button>" %}
+</div>
+{% endblock body %} 
+
+{% block scripts %} 
+<script src="{% static 'js/image_modal.js' %}"></script>
+{% endblock scripts %} 
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'css/image_modal_styles.css' %}">
+{% endblock links %}

@@ -3,43 +3,68 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Automação Araxa</title>
-    
+    <title>DJango Project</title>
 
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    {% block links %}
+    {% comment %} Link to use the bootstrap icons {% endcomment %}
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
 
-    {% endblock links %}
+    {% block links %} {% endblock links %}
   </head>
 
   <body>
-
     {% if messages %}
-      <div id="messages-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;">
-        {% for message in messages %}
-          <div class="toast align-items-center text-white bg-{{ message.tags }} border-0 show mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-              <div class="toast-body">
-                {{ message }}
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-          </div>
-        {% endfor %}
+    <div
+      id="messages-container"
+      class="position-fixed top-0 end-0 p-3"
+      style="z-index: 1055"
+    >
+      {% for message in messages %}
+      <div
+        class="toast align-items-center text-white bg-{{ message.tags }} border-0 show mb-2"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">{{ message }}</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
       </div>
+      {% endfor %}
+    </div>
     {% endif %}
 
-    {% block body %}
-    
-    {% endblock body %} 
-    
+    <ul class="nav bg-dark d-flex align-items-center justify-content-center">
+      <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/">Automação</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/edit-file">File Editor</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/book-1">Livro 1</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/book-2">Livro 2</a>
+      </li>
+    </ul>
+
+    {% block body %} {% endblock body %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
 
-    {% block scripts %}
-    
-    {% endblock scripts %}
+    {% block scripts %} {% endblock scripts %}
   </body>
 </html>

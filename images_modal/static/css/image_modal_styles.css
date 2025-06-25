@@ -1,0 +1,44 @@
+.carousel-item img {
+  cursor: grab;
+  display: block;
+  height: 70vh;
+  margin: 0 auto;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.carousel-item {
+  position: relative;
+}
+
+.image-overlay-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Need the check the correct color to use here */
+  color: lightcoral;
+  font-size: 1.5rem;
+}
+
+/* Used just to prevent the user to select the text by accident */
+.values-updated {
+  user-select: none;
+}
+
+img.rotated-90,
+img.rotated-270 {
+  max-width: 70vh !important;
+}
+
+.modal-footer {
+  height: 70px;
+}
+
+.img-thumbnail {
+  transition: transform 0.2s ease;
+}
+.img-thumbnail:hover {
+  transform: scale(1.05);
+}
