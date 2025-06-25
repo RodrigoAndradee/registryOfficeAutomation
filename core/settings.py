@@ -44,7 +44,10 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'django_celery_results',
     'django_tables2',
+    'tinymce',
     'bot',
+    'file_editor',
+    'images_modal'
 ]
 
 MIDDLEWARE = [
@@ -138,3 +141,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CELERY_BROKER_URL = os.getenv("BROKER_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = 'django-db'
+
+TINYMCE_DEFAULT_CONFIG = {
+    "height": 400,
+    "width": "100%",
+    "cleanup_on_startup": True,
+    "custom_undo_redo_levels": 20,
+    "selector": "textarea",
+    "theme": "silver",
+    "plugins": "textcolor link image code lists",
+    "toolbar1": "undo redo | bold italic | alignleft aligncenter alignright | code",
+    "toolbar2": "bullist numlist | forecolor backcolor | link image",
+    "contextmenu": "formats | link image",
+    "menubar": False,
+    "statusbar": True,
+}

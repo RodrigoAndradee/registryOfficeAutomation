@@ -1,0 +1,21 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block body %} 
+
+<div class="p-4">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Salvar</button>
+    </form>
+</div>
+{% endblock body %} 
+
+{% block scripts %} 
+  <script src="{% static 'tinymce/tinymce.min.js' %}"></script>
+{% endblock scripts %} 
+
+{% block links %}
+    {{form.media}}
+{% endblock links %}
