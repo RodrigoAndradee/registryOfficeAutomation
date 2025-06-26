@@ -18,9 +18,18 @@ class AutomationHistory(models.Model):
             )
         ])
     quantity = models.IntegerField()
-    type = models.CharField(max_length=255)
+    type =  models.IntegerField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PROCESSING')
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
-    error_message = models.CharField(null=True, blank=True, max_length=510)
+    error_message = models.CharField(null=True, blank=True, max_length=1024)
     can_retry = models.BooleanField(default=False)
+
+class TypesOfTaxation(models.Model):
+    code = models.IntegerField(primary_key=True)
+    description = models.CharField(max_length=512)
+    mapped_value = models.IntegerField(null=True, blank=True)
+    should_run_automation = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.code} - {self.description}"

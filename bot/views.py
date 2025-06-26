@@ -92,7 +92,6 @@ class ListHistory(View):
         messages.success(request, f"{len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="success")
         return redirect("history")
     
-
 class RetryHistory(View):
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         pk = kwargs.get("pk")
