@@ -9,3 +9,4 @@ django_celery_results
 django_tables2
 django-tinymce
 WeasyPrint
+pydantic

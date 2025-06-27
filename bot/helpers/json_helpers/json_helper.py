@@ -1,21 +1,36 @@
 import os
-import re
-
+from math import ceil
+from bot.models import TypesOfTaxation
+from pydantic import BaseModel, Field, ValidationError
 from typing import TypedDict, List, Tuple
 
-class AutomationItem(TypedDict):
+
+class AutomationItem(BaseModel):
+    code: str = Field(..., pattern=r'^\d{4}-\d$')
+    quantity: int
+    type: int
+
+
+class AutomationItemsModel(BaseModel):
+    automation_data: List[AutomationItem]
+
+class InvalidItem(TypedDict):
     code: str
-    quantity: str
-    type: str
+    quantity: int
+    type: int
+    message_error: str
 
-class AutomationItemsList(TypedDict):
-    List[AutomationItem]
 
-class AutomationData(TypedDict):
-    automation_data: AutomationItemsList
+class ValidItem(TypedDict):
+    code: str
+    quantity: int
+    type: int
 
-# This function handles the code and return the correct and validated value
-# Eg. 4135 returns 4135-0
+
+AutomationItemsList = List[AutomationItem]
+TaxationItemsList = List[TypesOfTaxation]
+
+
 def calculate_check_digit_mod10(code: str) -> str:
     weights = [2, 1]
     total = 0
@@ -32,65 +47,78 @@ def calculate_check_digit_mod10(code: str) -> str:
     check_digit = (10 - remainder) if remainder != 0 else 0
     return f"{code}-{check_digit}"
 
-def validate_json_fields(data: AutomationData) -> Tuple[str, AutomationItemsList, AutomationItemsList]:
-    valid_fields = []
-    invalid_fields = []
-    automation_data = data.get("automation_data")
 
-    if "automation_data" not in data:
-        return "Campo automation_data ausente no JSON!", valid_fields, invalid_fields
+def find_taxation_by_code(code: int, taxation_types: TaxationItemsList):
+    return next((item for item in taxation_types if item.code == code), None)
 
-    if not isinstance(automation_data, list):
-        return "Campo automation_data não é um array!", valid_fields, invalid_fields
+def validate_json_fields(raw_data: dict, taxation_types: List[TypesOfTaxation]) -> Tuple[List[ValidItem], List[InvalidItem]]:
+    valid_fields: List[ValidItem] = []
+    invalid_fields: List[InvalidItem] = []
     
-    for i, item in enumerate(automation_data):
-        if not isinstance(item, dict):
-            invalid_fields.append({"message_error": f"Item {i} em 'automation_data' deve ser um objeto."})
-            continue
-            
-        missing_fields = []
-        for field in ["code", "quantity", "type"]:
-            if field not in item:
-                missing_fields.append(field)
+    automation_data = raw_data.get("automation_data")
+    
+    if "automation_data" not in raw_data:
+        raise Exception("Campo automation_data ausente no JSON!")
+        
+    if not isinstance(automation_data, list):
+        raise Exception("Campo automation_data não é um array!")
+    
+    try:
+        model = AutomationItemsModel(**raw_data)
+    except ValidationError as e:
+        print("Error", e)
+        for err in e.errors():
+            index = err['loc'][1] if len(err['loc']) > 1 else "?"
+            invalid_fields.append({
+                "code": "",
+                "quantity": 0,
+                "type": 0,
+                "message_error": f"Erro no item {index}: {err['msg']}"
+            })
+        return valid_fields, invalid_fields
 
-        error_message = ", ".join(missing_fields)
-        if len(error_message) > 0:
-            invalid_fields.append({**item, "message_error": f"Campo(s) '{error_message}' ausente(s) no item {i}"})
+    for item in model.automation_data:
+        # Validação do dígito verificador
+        code_base = item.code.split("-")[0]
+        expected_code = calculate_check_digit_mod10(code_base)
+
+        if item.code != expected_code:
+            invalid_fields.append({
+                "code": item.code,
+                "quantity": item.quantity,
+                "type": item.type,
+                "message_error": f"Dígito verificador inválido. Esperado: {expected_code}"
+            })
             continue
 
-        if not isinstance(item["code"], str):
-            invalid_fields.append({**item, "message_error": f"Campo 'code' no item {i} deve ser uma string."})
-            continue
-        if not re.fullmatch(r'\d{4}', item["code"]):
-            invalid_fields.append({**item, "message_error": f"Campo 'code' no item {i} não segue o padrão."})
-            continue
-        if not isinstance(item["quantity"], str):
-            invalid_fields.append({**item, "message_error": f"Campo 'quantity' no item {i} deve ser uma string."})
-            continue
-        if not isinstance(item["type"], str):
-            invalid_fields.append({**item, "message_error": f"Campo 'type' no item {i} deve ser uma string."})
-            continue
+        taxation_type = find_taxation_by_code(item.type, taxation_types)
 
-        valid_fields.append({**item, "code": calculate_check_digit_mod10(item["code"]) })
+        if taxation_type:
+            if taxation_type.should_run_automation:
+                valid_fields.append({
+                    "code": item.code,
+                    "quantity": item.quantity,
+                    "type": taxation_type.mapped_value
+                })
+            else:
+                invalid_fields.append({
+                    "code": item.code,
+                    "quantity": item.quantity,
+                    "type": item.type,
+                    "message_error": f"Erro para executar: {taxation_type.description}"
+                })
+        else:
+            invalid_fields.append({
+                "code": item.code,
+                "quantity": item.quantity,
+                "type": item.type,
+                "message_error": "Nenhum mapeamento encontrado, por favor contate o suporte!"
+            })
 
-    return "", valid_fields, invalid_fields
+    return valid_fields, invalid_fields
 
-# This function breaks the json array in small arrays to match the workers amount    
+
 def split_chunks(data: List[AutomationItem]) -> List[List[AutomationItem]]:
-    workers_amount = int(os.getenv("WORKERS_AMOUNT", 1))
-
-    if workers_amount <= 1:
-        return [data]
-
-    chunk_size = len(data) // workers_amount
-    remainder = len(data) % workers_amount
-
-    result = []
-    start = 0
-
-    for i in range(workers_amount):
-        end = start + chunk_size + (1 if i < remainder else 0)
-        result.append(data[start:end])
-        start = end
-
-    return result
+    workers = max(1, int(os.getenv("WORKERS_AMOUNT", 1)))
+    chunk_size = ceil(len(data) / workers)
+    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]

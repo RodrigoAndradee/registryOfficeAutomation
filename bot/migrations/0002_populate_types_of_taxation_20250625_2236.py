@@ -2,7 +2,6 @@
 
 from django.db import migrations
 
-
 def populate_table(apps, schema_editor):
     TypesOfTaxation = apps.get_model('bot', 'TypesOfTaxation')
     data = [

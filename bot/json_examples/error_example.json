@@ -2,13 +2,13 @@
   "automation_data": [
     {
       "code": "4135-0",
-      "quantity": "2",
-      "type": "SFH/MCMV"
+      "quantity": 2,
+      "type": 1
     },
     {
       "code": "9999-0",
-      "quantity": "2",
-      "type": "Normal"
+      "quantity": 15,
+      "type": 1
     }
   ]
 }

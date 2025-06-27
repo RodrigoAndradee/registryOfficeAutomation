@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.dateparse import parse_date
 from django_tables2 import RequestConfig
 
-from .models import AutomationHistory
+from .models import AutomationHistory, TypesOfTaxation
 from .tables import AutomationHistoryTable
 from .forms import UploadJSONForm
 from .tasks import execute_form
@@ -54,7 +54,8 @@ class ListHistory(View):
     def post(self, request: HttpRequest) -> HttpResponse:
         form: UploadJSONForm = UploadJSONForm(request.POST, request.FILES)
         histories = AutomationHistory.objects.all()
-
+        taxation_types = list(TypesOfTaxation.objects.all())
+    
         if not form.is_valid():
             return self.render_history(request, form, histories)
 
@@ -71,25 +72,35 @@ class ListHistory(View):
             form.add_error("file", "Arquivo JSON inválido.")
             return self.render_history(request, form, histories)
 
-        error_msg, valid_fields, invalid_fields = validate_json_fields(json_content)
-
-        # Checking if there is no valid data
-        if len(valid_fields) == 0:
-            messages.error(request, error_msg if error_msg else "Nenhum dado importado corretamente! Verifique seu JSON!", extra_tags="danger")
-            return redirect("history")
+        try:
+            valid_fields, invalid_fields = validate_json_fields(json_content, taxation_types)
+            
+            print(valid_fields)
+            print(invalid_fields)
+        except Exception as e:
+            print(e)
+            form.add_error("file", f"Arquivo JSON inválido. {e}")
+            
+            
         
-        for item in valid_fields:
-            instance = AutomationHistory.objects.create(
-                code=item["code"],
-                quantity=item["quantity"],
-                type=item["type"]
-            )
-            item["item_id"] = instance.id
+            
+        # Checking if there is no valid data
+        # if len(valid_fields) == 0:
+        #     messages.error(request, error_msg if error_msg else "Nenhum dado importado corretamente! Verifique seu JSON!", extra_tags="danger")
+        #     return redirect("history")
+        
+        # for item in valid_fields:
+        #     instance = AutomationHistory.objects.create(
+        #         code=item["code"],
+        #         quantity=item["quantity"],
+        #         type=item["type"]
+        #     )
+        #     item["item_id"] = instance.id
 
-        for chunk in split_chunks(valid_fields):
-            execute_form.delay(chunk)
+        # for chunk in split_chunks(valid_fields):
+        #     execute_form.delay(chunk)
 
-        messages.success(request, f"{len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="success")
+        # messages.success(request, f"{len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="success")
         return redirect("history")
     
 class RetryHistory(View):
