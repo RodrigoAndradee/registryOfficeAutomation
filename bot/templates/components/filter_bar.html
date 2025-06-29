@@ -1,0 +1,69 @@
+<!-- Automation History Filter Bar -->
+
+{% load table_helpers %}
+
+<form class="d-flex align-items-center gap-2" method="get" action="{% url 'history' %}">
+
+    <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status }}">
+
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle text-truncate custom-size" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if request.GET.status %}
+            {{ request.GET.status|status_badge_label }}
+        {% else %}
+            Filtrar por Status
+        {% endif %}
+        </button>
+
+        <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+            <li><a class="dropdown-item" href="#" data-value="">Limpar</a></li>
+            <li><a class="dropdown-item" href="#" data-value="PROCESSING">Processando</a></li>
+            <li><a class="dropdown-item" href="#" data-value="ERROR">Erro</a></li>
+            <li><a class="dropdown-item" href="#" data-value="SUCCESS">Sucesso</a></li>
+        </ul>
+    </div>
+
+    <input type="hidden" name="month" id="monthInput" value="{{ request.GET.month }}">
+
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle text-truncate custom-size" type="button" id="monthDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if request.GET.month %}
+            {{ request.GET.month|month_label }}
+        {% else %}
+            Filtrar por Mês
+        {% endif %}
+        </button>
+
+        <ul class="dropdown-menu" aria-labelledby="monthDropdown">
+            <li><a class="dropdown-item" href="#" data-value="">Limpar</a></li>
+            <li><a class="dropdown-item" href="#" data-value="1">Janeiro</a></li>
+            <li><a class="dropdown-item" href="#" data-value="2">Fevereiro</a></li>
+            <li><a class="dropdown-item" href="#" data-value="3">Março</a></li>
+            <li><a class="dropdown-item" href="#" data-value="4">Abril</a></li>
+            <li><a class="dropdown-item" href="#" data-value="5">Maio</a></li>
+            <li><a class="dropdown-item" href="#" data-value="6">Junho</a></li>
+            <li><a class="dropdown-item" href="#" data-value="7">Julho</a></li>
+            <li><a class="dropdown-item" href="#" data-value="8">Agosto</a></li>
+            <li><a class="dropdown-item" href="#" data-value="9">Setembro</a></li>
+            <li><a class="dropdown-item" href="#" data-value="10">Outubro</a></li>
+            <li><a class="dropdown-item" href="#" data-value="11">Novembro</a></li>
+            <li><a class="dropdown-item" href="#" data-value="12">Dezembro</a></li>
+        </ul>
+    </div>
+
+    {% now "Y" as current_year %}
+    <input type="hidden" name="year" id="yearInput" value="{{ request.GET.year|default:current_year }}">
+
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle text-truncate custom-size" type="button" id="yearDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            {{ request.GET.year|default:current_year }}
+        </button>
+
+        <ul class="dropdown-menu" aria-labelledby="yearDropdown">
+            <li><a class="dropdown-item" href="#" data-value="">Limpar</a></li>
+            {% for year in 2025|get_range_until:2025 %}
+                <li><a class="dropdown-item" href="#" data-value="{{year}}">{{year}}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</form> 

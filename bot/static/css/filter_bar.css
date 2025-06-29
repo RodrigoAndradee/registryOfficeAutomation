@@ -1,0 +1,11 @@
+.custom-size {
+  position: relative;
+  width: 200px;
+}
+
+.custom-size::after {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}

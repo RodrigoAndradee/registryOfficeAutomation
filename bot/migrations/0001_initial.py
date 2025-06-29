@@ -22,20 +22,9 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('ERROR', 'Erro'), ('SUCCESS', 'Sucesso'), ('PROCESSING', 'Processando')], default='PROCESSING', max_length=10)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('finished_at', models.DateTimeField(blank=True, null=True)),
-                ('error_message', models.CharField(blank=True, max_length=512, null=True)),
+                ('error_message', models.CharField(blank=True, max_length=1024, null=True)),
                 ('can_retry', models.BooleanField(default=False)),
+                ('mapped_type', models.IntegerField(blank=True, null=True)),
             ],
-        ),
-        migrations.CreateModel(
-            name='TypesOfTaxation',
-            fields=[
-                ('code', models.IntegerField(primary_key=True, serialize=False)),
-                ('description', models.CharField(max_length=512)),
-                ('mapped_value', models.IntegerField(blank=True, null=True)),
-                ('should_run_automation', models.BooleanField(default=False)),
-            ],
-        ),
+        )
     ]
-    
-    # python manage.py makemigrations --name populate_types_of_taxation bot
-

@@ -1,0 +1,28 @@
+<!-- History Modal -->
+
+{% load render_table from django_tables2 %}
+
+<div class="modal fade" id="historyDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered history-details-modal">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <div class="d-flex flex-column">
+                    <h4 class="modal-title">Detalhes da importação</h4>
+                    <h6>Alguns códigos retornaram erro!</h6>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-table-content">
+                    {% render_table history_details_table %}
+                </div>
+            </div>
+ 
+            <div class="modal-footer d-flex align-items-center">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">Estou ciente!</button>
+            </div>
+        </div>
+    </div>
+</div>

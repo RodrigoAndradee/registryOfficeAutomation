@@ -10,7 +10,7 @@ from django.utils.dateparse import parse_date
 from django_tables2 import RequestConfig
 
 from .models import AutomationHistory, TypesOfTaxation
-from .tables import AutomationHistoryTable
+from .tables import AutomationHistoryTable, HistoryDetailsTable
 from .forms import UploadJSONForm
 from .tasks import execute_form
 
@@ -20,19 +20,24 @@ logger = logging.getLogger(__name__)
 
 class ListHistory(View):
     
-    def render_history(self, request: HttpRequest, form: UploadJSONForm, histories) -> HttpResponse:
+    def render_history(self, request: HttpRequest, form: UploadJSONForm, histories, history_details_table = None) -> HttpResponse:
         table = AutomationHistoryTable(histories)
         RequestConfig(request, paginate={"per_page": 30}).configure(table)
+        
+        show_history_details_modal = request.session.pop("show_history_details_modal", False)
 
         return render(request, "bot/automation_history.html", {
             "form": form, 
             "histories": histories,
-            "table": table
+            "table": table,
+            "show_history_details_modal": show_history_details_modal,
+            "history_details_table": history_details_table,
         })
 
     def get(self, request: HttpRequest) -> HttpResponse:
         status = request.GET.get("status")
-        date_str = request.GET.get("date")
+        month = request.GET.get("month")
+        year = request.GET.get("year") or str(datetime.now().year)
 
         form: UploadJSONForm = UploadJSONForm()
 
@@ -40,22 +45,21 @@ class ListHistory(View):
 
         if status:
             histories = histories.filter(status=status)
-        if date_str:
-            parsed_date = parse_date(date_str)
-            if parsed_date:
-                start_datetime = datetime.combine(parsed_date, datetime.min.time())
-                end_datetime = datetime.combine(parsed_date, datetime.max.time())
-                histories = histories.filter(created_at__range=(start_datetime, end_datetime))
-            else:
-                messages.warning(request, "Formato de data inválido", extra_tags="danger")
+                
+        if month:
+            histories = histories.filter(created_at__month=month)
+
+        if year:
+            histories = histories.filter(created_at__year=year)
 
         return self.render_history(request, form, histories)
     
     def post(self, request: HttpRequest) -> HttpResponse:
         form: UploadJSONForm = UploadJSONForm(request.POST, request.FILES)
-        histories = AutomationHistory.objects.all()
+        month = request.POST.get("month")
+        histories = AutomationHistory.objects.all().order_by("-id")
         taxation_types = list(TypesOfTaxation.objects.all())
-    
+            
         if not form.is_valid():
             return self.render_history(request, form, histories)
 
@@ -75,33 +79,36 @@ class ListHistory(View):
         try:
             valid_fields, invalid_fields = validate_json_fields(json_content, taxation_types)
             
-            print(valid_fields)
-            print(invalid_fields)
+            # Saving the "no need to run" or "has some error" to show to user on the table
+            history_details_table = None
+            if invalid_fields:
+                for item in invalid_fields:
+                    instance = AutomationHistory.objects.create(**item)
+                
+                request.session["show_history_details_modal"]= True
+                history_details_table = HistoryDetailsTable(invalid_fields)
+            
+            # Running the automation on the data that is safe to run
+            if valid_fields:
+                for item in valid_fields:
+                    instance = AutomationHistory.objects.create(**item)
+                    item["item_id"] = instance.id
+                
+                for chunk in split_chunks(valid_fields):
+                    execute_form.delay(chunk, month)
+                
+                # messages.success(request, f"{len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="success")
+                            
+            elif not invalid_fields:
+                messages.error(request, "Nenhum dado válido no JSON.", extra_tags="danger")
+                
         except Exception as e:
             print(e)
-            form.add_error("file", f"Arquivo JSON inválido. {e}")
+            messages.error(request, e, extra_tags="danger")
+            return self.render_history(request, form, histories)
             
-            
-        
-            
-        # Checking if there is no valid data
-        # if len(valid_fields) == 0:
-        #     messages.error(request, error_msg if error_msg else "Nenhum dado importado corretamente! Verifique seu JSON!", extra_tags="danger")
-        #     return redirect("history")
-        
-        # for item in valid_fields:
-        #     instance = AutomationHistory.objects.create(
-        #         code=item["code"],
-        #         quantity=item["quantity"],
-        #         type=item["type"]
-        #     )
-        #     item["item_id"] = instance.id
-
-        # for chunk in split_chunks(valid_fields):
-        #     execute_form.delay(chunk)
-
-        # messages.success(request, f"{len(valid_fields)} ite{'ns' if len(valid_fields) > 1 else 'm'} importado(s) com sucesso e {len(invalid_fields)} ite{'ns' if len(invalid_fields) > 1 else 'm'} inválido(s)!", extra_tags="success")
-        return redirect("history")
+        # Returning the updated values on the table
+        return self.render_history(request, form, AutomationHistory.objects.all().order_by("-id"), history_details_table)
     
 class RetryHistory(View):
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:

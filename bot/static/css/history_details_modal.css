@@ -1,0 +1,10 @@
+.history-details-modal {
+  max-width: 80vw;
+}
+
+.modal-table-content {
+  .table-container {
+    max-height: calc(100vh - 300px);
+    overflow: auto;
+  }
+}

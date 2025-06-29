@@ -20,21 +20,26 @@ def navigate_through_menu(page: Page, fields) -> None:
     safe_hover(page, fields["registry_office"])
     safe_click(page, fields["declare"], "Declarar (Menu de navegação)")
 
-def fill_form_content(page, fields, data):
+def fill_form_content(page: Page, fields, data, month: str) -> None:
+    # Checking the selected month, if it's different from the one selected on the modal we need to change it
+    selected_month = page.locator(fields["month"]).input_value()
+    print("Selected Month", {selected_month})
+    if selected_month != month:
+        safe_select_option(page, fields["month"], month, 'Campo "mês"')
+    
     safe_fill(page, fields["code_act"], data["code"], "Código do Ato") 
     safe_press(page, 'Enter', "Código do Ato")
     page.wait_for_load_state('networkidle')
 
     # The default value on the form is Normal, we just need to change in case it's different from Normal
-    # TODO: needs to check if 100 is the Normal value
-    if data["type"] != "100":
-        safe_select_option(page, fields["type"], data["type"], 'Campo "Tipo"')
+    if data["mapped_type"] != 100:
+        safe_select_option(page, fields["type"], data["mapped_type"], 'Campo "Tipo"')
 
     safe_fill(page, fields["quantity"], str(data["quantity"]), "Quantidade")
     safe_click(page, fields["submit_form"], "Botão Confirmar")
 
 @shared_task(bind=True)
-def execute_form(self, data) -> None:
+def execute_form(self, data, month: str) -> None:
     json_file_path = os.path.join(os.path.dirname(__file__), 'static', 'data', 'form_fields.json')
     with open(json_file_path, 'r', encoding='utf-8') as file:
         form_fields = json.load(file)
@@ -67,7 +72,7 @@ def execute_form(self, data) -> None:
             dialog_error_data.clear()
 
             try: 
-                fill_form_content(page, form_fields, item)
+                fill_form_content(page, form_fields, item, month)
                 # Waiting 0,5 seconds to check if there is some dialog on the screen
                 page.wait_for_timeout(500)
 

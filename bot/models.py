@@ -24,12 +24,12 @@ class AutomationHistory(models.Model):
     finished_at = models.DateTimeField(null=True, blank=True)
     error_message = models.CharField(null=True, blank=True, max_length=1024)
     can_retry = models.BooleanField(default=False)
+    mapped_type = models.IntegerField(null=True, blank=True)
 
 class TypesOfTaxation(models.Model):
-    code = models.IntegerField(primary_key=True)
+    type = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=512)
-    mapped_value = models.IntegerField(null=True, blank=True)
-    should_run_automation = models.BooleanField(default=False)
+    mapped_type = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.code} - {self.description}"

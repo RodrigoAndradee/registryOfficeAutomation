@@ -1,8 +1,11 @@
 import os
 from math import ceil
-from bot.models import TypesOfTaxation
-from pydantic import BaseModel, Field, ValidationError
 from typing import TypedDict, List, Tuple
+from pydantic import BaseModel, Field, ValidationError
+
+from django.utils import timezone
+
+from bot.models import TypesOfTaxation
 
 
 class AutomationItem(BaseModel):
@@ -18,19 +21,20 @@ class InvalidItem(TypedDict):
     code: str
     quantity: int
     type: int
-    message_error: str
+    error_message: str
 
 
 class ValidItem(TypedDict):
     code: str
     quantity: int
     type: int
+    mapped_type: int
 
 
 AutomationItemsList = List[AutomationItem]
 TaxationItemsList = List[TypesOfTaxation]
 
-
+# Validate the code. If the last character is not valid adds the item to errors array
 def calculate_check_digit_mod10(code: str) -> str:
     weights = [2, 1]
     total = 0
@@ -49,7 +53,7 @@ def calculate_check_digit_mod10(code: str) -> str:
 
 
 def find_taxation_by_code(code: int, taxation_types: TaxationItemsList):
-    return next((item for item in taxation_types if item.code == code), None)
+    return next((item for item in taxation_types if item.type == code), None)
 
 def validate_json_fields(raw_data: dict, taxation_types: List[TypesOfTaxation]) -> Tuple[List[ValidItem], List[InvalidItem]]:
     valid_fields: List[ValidItem] = []
@@ -73,12 +77,15 @@ def validate_json_fields(raw_data: dict, taxation_types: List[TypesOfTaxation]) 
                 "code": "",
                 "quantity": 0,
                 "type": 0,
-                "message_error": f"Erro no item {index}: {err['msg']}"
+                "error_message": f"Erro no item {index}: {err['msg']}",
+                "status": "ERROR",
+                "finished_at": timezone.now()
             })
         return valid_fields, invalid_fields
 
     for item in model.automation_data:
-        # Validação do dígito verificador
+        
+        # Checking if the code is correct
         code_base = item.code.split("-")[0]
         expected_code = calculate_check_digit_mod10(code_base)
 
@@ -87,37 +94,47 @@ def validate_json_fields(raw_data: dict, taxation_types: List[TypesOfTaxation]) 
                 "code": item.code,
                 "quantity": item.quantity,
                 "type": item.type,
-                "message_error": f"Dígito verificador inválido. Esperado: {expected_code}"
+                "error_message": f"Dígito verificador inválido. Esperado: <b>{expected_code}</b>",
+                "status": "ERROR",
+                "finished_at": timezone.now()
             })
             continue
 
         taxation_type = find_taxation_by_code(item.type, taxation_types)
 
         if taxation_type:
-            if taxation_type.should_run_automation:
+            # If there is some mapped type it means that we can run the automation
+            if taxation_type.mapped_type is not None:
                 valid_fields.append({
                     "code": item.code,
                     "quantity": item.quantity,
-                    "type": taxation_type.mapped_value
-                })
-            else:
-                invalid_fields.append({
-                    "code": item.code,
-                    "quantity": item.quantity,
                     "type": item.type,
-                    "message_error": f"Erro para executar: {taxation_type.description}"
+                    "mapped_type": taxation_type.mapped_type
                 })
-        else:
+                continue
+            
             invalid_fields.append({
                 "code": item.code,
                 "quantity": item.quantity,
                 "type": item.type,
-                "message_error": "Nenhum mapeamento encontrado, por favor contate o suporte!"
+                "error_message": f"Tipo <b>{taxation_type.description}</b> não cadastrado!",
+                "status": "ERROR",
+                "finished_at": timezone.now()
             })
+            continue
+        
+        invalid_fields.append({
+            "code": item.code,
+            "quantity": item.quantity,
+            "type": item.type,
+            "error_message": "Nenhum mapeamento encontrado, por favor contate o suporte!",
+            "status": "ERROR",
+            "finished_at": timezone.now()
+        })
 
     return valid_fields, invalid_fields
 
-
+# This function breaks the array into N(number of workers) smaller arrays to parallelize the execution.
 def split_chunks(data: List[AutomationItem]) -> List[List[AutomationItem]]:
     workers = max(1, int(os.getenv("WORKERS_AMOUNT", 1)))
     chunk_size = ceil(len(data) / workers)
