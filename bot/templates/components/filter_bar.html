@@ -8,11 +8,11 @@
 
     <div class="dropdown">
         <button class="btn btn-secondary dropdown-toggle text-truncate custom-size" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        {% if request.GET.status %}
-            {{ request.GET.status|status_badge_label }}
-        {% else %}
-            Filtrar por Status
-        {% endif %}
+            {% if request.GET.status %}
+                {{ request.GET.status|status_badge_label }}
+            {% else %}
+                Status
+            {% endif %}
         </button>
 
         <ul class="dropdown-menu" aria-labelledby="statusDropdown">
@@ -27,11 +27,11 @@
 
     <div class="dropdown">
         <button class="btn btn-secondary dropdown-toggle text-truncate custom-size" type="button" id="monthDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        {% if request.GET.month %}
-            {{ request.GET.month|month_label }}
-        {% else %}
-            Filtrar por Mês
-        {% endif %}
+            {% if request.GET.month %}
+                {{ request.GET.month|month_label }}
+            {% else %}
+                Mês da Competência
+            {% endif %}
         </button>
 
         <ul class="dropdown-menu" aria-labelledby="monthDropdown">
@@ -51,17 +51,22 @@
         </ul>
     </div>
 
-    {% now "Y" as current_year %}
-    <input type="hidden" name="year" id="yearInput" value="{{ request.GET.year|default:current_year }}">
+    <input type="hidden" name="year" id="yearInput" value="{{ request.GET.year }}">
 
     <div class="dropdown">
         <button class="btn btn-secondary dropdown-toggle text-truncate custom-size" type="button" id="yearDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            {{ request.GET.year|default:current_year }}
+            {% if request.GET.year %}
+                {{ request.GET.year }}
+            {% else %}
+                Ano da Competência
+            {% endif %}
         </button>
+
+        {{current_year}}
 
         <ul class="dropdown-menu" aria-labelledby="yearDropdown">
             <li><a class="dropdown-item" href="#" data-value="">Limpar</a></li>
-            {% for year in 2025|get_range_until:2025 %}
+            {% for year in 2025|get_range_until:current_year %}
                 <li><a class="dropdown-item" href="#" data-value="{{year}}">{{year}}</a></li>
             {% endfor %}
         </ul>

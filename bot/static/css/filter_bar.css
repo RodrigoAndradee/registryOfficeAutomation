@@ -1,6 +1,6 @@
 .custom-size {
   position: relative;
-  width: 200px;
+  width: 220px;
 }
 
 .custom-size::after {

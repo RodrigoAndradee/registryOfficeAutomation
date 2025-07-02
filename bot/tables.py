@@ -36,16 +36,26 @@ def common_render_status(self, record):
         icon,
         label
     )
+    
+def get_common_column_style(size: int) -> dict:
+    if not size:
+        return {"th": {"style": f"background-color: #f8f9fa;"}}
 
+    return {
+        "td": {"style": f"width: {size}px;"},
+        "th": {"style": f"width: {size}px; background-color: #f8f9fa;"}
+    }
 class AutomationHistoryTable(tables.Table):
-    id = tables.Column(attrs={"td": {"style": "width: 70px;"}})
-    code = tables.Column(verbose_name="Código", attrs={"td": {"style": "width: 80px;"}})
-    quantity = tables.Column(verbose_name="Quantidade", attrs={"td": {"style": "width: 90px;"}})
-    type = tables.Column(verbose_name="Tipo", attrs={"td": {"style": "width: 55px;"}})
-    created_at = tables.DateTimeColumn(format="d/m/Y H:i", verbose_name="Criado em", attrs={"td": {"style": "width: 150px;"}})
-    finished_at = tables.DateTimeColumn(format="d/m/Y H:i", verbose_name="Finalizado em", default="", attrs={"td": {"style": "width: 150px;"}})
-    error_message = tables.Column(verbose_name="Mensagem de Erro", default="")
-    status = tables.Column(verbose_name="Status", attrs={"td": {"style": "width: 130px; padding: 8px 12px; "}})
+    id = tables.Column(attrs=get_common_column_style(70))
+    code = tables.Column(verbose_name="Código", attrs=get_common_column_style(80))
+    quantity = tables.Column(verbose_name="Quantidade", attrs=get_common_column_style(90))
+    type = tables.Column(verbose_name="Tipo", attrs=get_common_column_style(55))
+    month_of_competence = tables.Column(verbose_name="Mês da Competência", attrs=get_common_column_style(180))
+    year_of_competence = tables.Column(verbose_name="Ano da Competência", attrs=get_common_column_style(180))
+    created_at = tables.DateTimeColumn(format="d/m/Y H:i", verbose_name="Criado em", attrs=get_common_column_style(150))
+    finished_at = tables.DateTimeColumn(format="d/m/Y H:i", verbose_name="Finalizado em", default="", attrs=get_common_column_style(150))
+    status = tables.Column(verbose_name="Status", attrs=get_common_column_style(130))
+    error_message = tables.Column(verbose_name="Mensagem de Erro", default="", attrs=get_common_column_style(None))
     
     # action = tables.TemplateColumn(template_name="bot/automation_history_actions_column.html", verbose_name="Ações")
 
@@ -61,12 +71,15 @@ class AutomationHistoryTable(tables.Table):
     class Meta:
         model = AutomationHistory
         template_name = "django_tables2/bootstrap4.html"
+        empty_text = "Nenhum dado encontrado."
         fields = (
             "id",
-            "code", 
-            "quantity", 
-            "type", 
-            "created_at", 
+            "code",
+            "quantity",
+            "type",
+            "month_of_competence",
+            "year_of_competence",
+            "created_at",
             "finished_at",
             "error_message",
             "status",
